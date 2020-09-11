@@ -1,4 +1,5 @@
 """
+from https://github.com/d-li14/mobilenext.pytorch/blob/master/mobilenext.py
 Creates a MobileNeXt Model as defined in:
 Zhou Daquan, Qibin Hou, Yunpeng Chen, Jiashi Feng, Shuicheng Yan
 Rethinking Bottleneck Structure for Efficient Mobile Network Design
@@ -27,8 +28,8 @@ def _make_divisible(v, divisor, min_value=None):
         min_value = divisor
     new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
     # Make sure that round down does not go down by more than 10%.
-    if new_v < 0.9 * v:
-        new_v += divisor
+    #if new_v < 0.9 * v:
+    #    new_v += divisor
     return new_v
 
 
@@ -45,7 +46,14 @@ class SandGlass(nn.Module):
         super(SandGlass, self).__init__()
         assert stride in [1, 2]
 
-        hidden_dim = round(inp // reduction_ratio)
+        #hidden_dim = round(oup // reduction_ratio)
+        #hidden_dim = _make_divisible(hidden_dim, 16)
+
+        hidden_dim = inp // reduction_ratio
+        if hidden_dim < oup / 6.:
+            hidden_dim = math.ceil(oup / 6.)
+            hidden_dim = _make_divisible(hidden_dim, 16)
+        
         self.identity = stride == 1 and inp == oup
 
         self.conv = nn.Sequential(
@@ -102,7 +110,6 @@ class MobileNeXt(nn.Module):
         # building last several layers
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Linear(output_channel, num_classes)
-
         self._initialize_weights()
 
     def forward(self, x):
@@ -131,4 +138,3 @@ def mobilenext(**kwargs):
     Constructs a MobileNeXt model
     """
     return MobileNeXt(**kwargs)
-
